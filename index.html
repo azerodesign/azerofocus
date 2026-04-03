@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azero Focus System - SaaS Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* CSS Variables untuk Theme & Accent Management */
+        :root {
+            --bg-app: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --main-bg: #ffffff;
+            --accent: #4f46e5;
+            --accent-rgb: 79, 70, 229;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --card-bg: #ffffff;
+            --widget-bg: #ffffff;
+            --widget-border: #f1f5f9;
+            --splash-bg: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-app: #020617;
+            --sidebar-bg: #0b0f1a;
+            --main-bg: #050507;
+            --border: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --card-bg: #0b0f1a;
+            --widget-bg: #111420;
+            --widget-border: #1e2335;
+            --splash-bg: #050507;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Branding Dinamis */
+        .bg-brand { background-color: var(--accent) !important; }
+        .text-brand { color: var(--accent) !important; }
+        .border-brand { border-color: var(--accent) !important; }
+        .bg-brand-soft { background-color: rgba(var(--accent-rgb), 0.1) !important; }
+        .border-brand-soft { border-color: rgba(var(--accent-rgb), 0.2) !important; }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed; inset: 0; background: var(--splash-bg); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+        }
+
+        .splash-logo { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--accent)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 15px var(--accent)); }
+        }
+
+        .loading-bar { width: 120px; height: 2px; background: var(--border); border-radius: 10px; margin-top: 24px; overflow: hidden; position: relative; }
+        .loading-progress { width: 40%; height: 100%; background: var(--accent); position: absolute; animation: loading-slide 1.5s infinite ease-in-out; }
+        @keyframes loading-slide { 0% { left: -40%; } 100% { left: 100%; } }
+
+        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease; }
+        .sidebar-hidden { width: 0 !important; opacity: 0; pointer-events: none; border-width: 0 !important; }
+
+        .saas-card { background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05); }
+        .dark-mode .saas-card { box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5); }
+
+        .sw-widget { background: var(--widget-bg); border: 1px solid var(--widget-border); border-radius: 32px; }
+        .timer-progress { transition: stroke-dashoffset 1s linear, stroke 0.4s ease; }
+
+        input[type="range"] { appearance: none; background: var(--border); height: 6px; border-radius: 10px; }
+        input[type="range"]::-webkit-slider-thumb { 
+            appearance: none; width: 14px; height: 14px; background: var(--accent); 
+            border-radius: 50%; cursor: pointer; border: 2px solid white; transition: background 0.3s; 
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        
+        .nav-btn-active { 
+            background-color: rgba(var(--accent-rgb), 0.1) !important; 
+            color: var(--accent) !important; 
+            border: 1px solid rgba(var(--accent-rgb), 0.2) !important; 
+        }
+        .timer-glow { filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.3)); }
+
+        .color-dot-active { 
+            outline: 2px solid var(--accent); 
+            outline-offset: 3px; 
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <div class="splash-logo w-16 h-16 bg-brand rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-2xl transition-all">A</div>
+        <div class="mt-6 text-center">
+            <h2 class="font-bold text-sm tracking-widest uppercase">Azero Focus</h2>
+            <p class="text-[10px] text-[var(--text-secondary)] mt-1 font-medium tracking-tighter uppercase">Inisialisasi Workspace</p>
+        </div>
+        <div class="loading-bar">
+            <div class="loading-progress bg-brand"></div>
+        </div>
+    </div>
+
+    <div class="flex h-screen w-full overflow-hidden">
+        
+        <!-- SIDEBAR KIRI -->
+        <aside id="sidebar-left" class="w-64 bg-[var(--sidebar-bg)] border-r border-[var(--border)] flex flex-col shrink-0 sidebar-transition z-30">
+            <div class="p-6 border-b border-[var(--border)] flex items-center gap-3">
+                <div class="w-9 h-9 bg-brand rounded-lg flex items-center justify-center font-black text-white shadow-lg transition-all">A</div>
+                <div class="overflow-hidden whitespace-nowrap">
+                    <h1 class="font-bold text-sm tracking-tight text-[var(--text-primary)]">AZERO</h1>
+                    <p class="text-[9px] text-[var(--text-secondary)] font-bold uppercase tracking-widest">Focus System</p>
+                </div>
+            </div>
+
+            <div class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <button onclick="setView('timer')" id="nav-timer" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all group nav-btn-active">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span>Pomodoro</span>
+                </button>
+                <button onclick="setView('stopwatch')" id="nav-stopwatch" class="w-full flex items-center gap-3 px-3 py-2.5 text-[var(--text-secondary)] hover:bg-slate-500/10 rounded-lg text-sm font-semibold transition-all group">
+                    <i data-lucide="timer" class="w-4 h-4 group-hover:text-brand"></i>
+                    <span>Stopwatch</span>
+                </button>
+                <button onclick="setView('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3 py-2.5 text-[var(--text-secondary)] hover:bg-slate-500/10 rounded-lg text-sm font-semibold transition-all group">
+                    <i data-lucide="settings" class="w-4 h-4 group-hover:text-brand"></i>
+                    <span>Pengaturan</span>
+                </button>
+                
+                <div class="pt-8 px-2 text-center text-[var(--text-secondary)]">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-4">Status</p>
+                    <div class="flex flex-col items-center">
+                        <span id="side-stats-cycles" class="text-xl font-bold font-mono text-[var(--text-primary)]">0</span>
+                        <span class="text-[9px] uppercase font-bold tracking-widest">Sesi Selesai</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-[var(--border)]">
+                <button onclick="toggleTheme()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-500/10 transition-all text-xs font-bold uppercase tracking-wider">
+                    <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+                    <span id="theme-text">Light Mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 bg-[var(--main-bg)] relative transition-colors">
+            <header class="h-16 px-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--sidebar-bg)]/50 backdrop-blur-md sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar('left')" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-500/10 rounded-lg transition-all">
+                        <i data-lucide="panel-left" class="w-5 h-5"></i>
+                    </button>
+                    <div class="h-4 w-px bg-[var(--border)] mx-1"></div>
+                    <div class="flex items-center gap-2 px-3 py-1 bg-brand-soft rounded-full border border-brand-soft transition-all">
+                        <div id="session-dot" class="w-2 h-2 rounded-full bg-brand"></div>
+                        <span id="session-status" class="text-[10px] font-bold text-brand uppercase tracking-widest transition-colors">Standby</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="current-clock" class="text-[10px] font-bold text-[var(--text-secondary)] font-mono tracking-widest mr-2 hidden sm:block">00:00:00</div>
+                    <button id="btn-mute" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                        <i data-lucide="volume-2" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="toggleSidebar('right')" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-500/10 rounded-lg transition-all">
+                        <i data-lucide="panel-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW: POMODORO -->
+            <div id="view-timer" class="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center">
+                <div class="max-w-4xl w-full mx-auto space-y-10 text-center">
+                    <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                        <div class="saas-card p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <p class="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Total Sesi</p>
+                            <h3 id="stats-cycles" class="text-xl font-bold text-[var(--text-primary)]">0</h3>
+                        </div>
+                        <div class="saas-card p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <p class="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">Menit Fokus</p>
+                            <h3 id="stats-minutes" class="text-xl font-bold text-[var(--text-primary)]">0</h3>
+                        </div>
+                    </div>
+
+                    <div id="timer-container" class="relative w-64 h-64 sm:w-72 sm:h-72 mx-auto flex items-center justify-center transition-all duration-500">
+                        <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="46" fill="transparent" stroke="var(--border)" stroke-width="1.5" opacity="0.3"></circle>
+                            <circle id="progress-circle" cx="50" cy="50" r="46" fill="transparent" stroke="currentColor" stroke-width="2.5" 
+                                    stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" 
+                                    class="text-brand transition-all duration-300 timer-glow"></circle>
+                        </svg>
+                        <div class="relative flex flex-col items-center">
+                            <div id="status-badge" class="mb-3 px-3 py-1 rounded-full border text-[8px] font-black uppercase tracking-[0.4em] bg-brand-soft border-brand-soft text-brand transition-all">
+                                Deep Focus
+                            </div>
+                            <h2 id="timer-display" class="text-6xl sm:text-7xl font-mono font-bold text-[var(--text-primary)] tracking-tight tabular-nums leading-none">25:00</h2>
+                            <div class="mt-6 flex items-center gap-6">
+                                <button id="btn-reset" class="p-2.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                                <button id="btn-play" class="w-14 h-14 bg-brand text-white rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all">
+                                    <i id="play-icon" data-lucide="play" class="w-6 h-6 fill-current ml-1"></i>
+                                </button>
+                                <div class="w-9"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: STOPWATCH -->
+            <div id="view-stopwatch" class="hidden flex-1 overflow-y-auto p-6 md:p-12 flex flex-col items-center justify-center">
+                <div class="max-w-xl w-full mx-auto">
+                    <div class="sw-widget p-8 flex gap-8 items-center transition-all">
+                        <div class="flex flex-col leading-[0.9] font-mono font-bold shrink-0">
+                            <div id="sw-sec-big" class="text-[80px] sm:text-[96px] tracking-tighter text-[var(--text-primary)]">00</div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="sw-min-big" class="text-[48px] sm:text-[56px] tracking-tighter text-[var(--text-secondary)]">0</span>
+                                <span class="text-lg text-[var(--text-secondary)] opacity-60 lowercase font-sans">min</span>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 flex flex-col h-full justify-between py-2 overflow-hidden text-center items-center">
+                            <div>
+                                <p class="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5">Timestamp</p>
+                                <div id="sw-last-lap" class="bg-brand-soft rounded-xl px-4 py-3 text-xs text-brand flex justify-between items-center border border-brand-soft">
+                                    <span class="truncate italic opacity-60">Click flag...</span>
+                                    <i data-lucide="flag" class="w-3.5 h-3.5 opacity-50 shrink-0"></i>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 flex items-center justify-center gap-6 bg-slate-500/5 py-3 rounded-2xl border border-[var(--border)] w-full">
+                                <button onclick="resetStopwatch()" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="toggleStopwatch()" id="sw-play-btn" class="w-11 h-11 bg-brand text-white rounded-xl flex items-center justify-center shadow-lg hover:opacity-90 transition-all active:scale-95">
+                                    <i id="sw-play-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                                </button>
+                                <button onclick="lapStopwatch()" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
+                                    <i data-lucide="flag" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sw-laps" class="mt-6 px-4 grid grid-cols-1 gap-2 max-h-40 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="hidden flex-1 overflow-y-auto p-8 md:p-12">
+                <div class="max-w-2xl mx-auto space-y-10 pb-12">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight text-[var(--text-primary)]">Workspace Settings</h2>
+                        <p class="text-sm text-[var(--text-secondary)]">Personalisasi sistem Azero milik lo.</p>
+                    </div>
+
+                    <!-- ACCENT COLOR PICKER -->
+                    <section class="space-y-4">
+                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-brand transition-colors">Tema Warna Utama</h3>
+                        <div class="saas-card p-6 rounded-2xl grid grid-cols-4 gap-4">
+                            <button onclick="setAccent('indigo')" class="flex flex-col items-center gap-3 group">
+                                <div id="dot-indigo" class="w-10 h-10 rounded-full bg-[#6366f1] border-2 border-white/10 transition-all"></div>
+                                <span class="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Indigo</span>
+                            </button>
+                            <button onclick="setAccent('violet')" class="flex flex-col items-center gap-3 group">
+                                <div id="dot-violet" class="w-10 h-10 rounded-full bg-[#8b5cf6] border-2 border-white/10 transition-all"></div>
+                                <span class="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Violet</span>
+                            </button>
+                            <button onclick="setAccent('blue')" class="flex flex-col items-center gap-3 group">
+                                <div id="dot-blue" class="w-10 h-10 rounded-full bg-[#3b82f6] border-2 border-white/10 transition-all"></div>
+                                <span class="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Blue</span>
+                            </button>
+                            <button onclick="setAccent('amber')" class="flex flex-col items-center gap-3 group">
+                                <div id="dot-amber" class="w-10 h-10 rounded-full bg-[#f59e0b] border-2 border-white/10 transition-all"></div>
+                                <span class="text-[9px] font-bold text-[var(--text-secondary)] uppercase">Yellow</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Timer Config -->
+                    <section class="space-y-4">
+                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-brand transition-colors">Durasi Sesi</h3>
+                        <div class="saas-card p-6 rounded-2xl space-y-8">
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-end text-[var(--text-primary)]">
+                                    <div>
+                                        <p class="text-sm font-bold">Waktu Fokus</p>
+                                        <p class="text-[10px] text-[var(--text-secondary)]">Lama sesi deep work standard.</p>
+                                    </div>
+                                    <span id="set-label-work" class="text-lg font-mono font-bold text-brand">25m</span>
+                                </div>
+                                <input id="set-input-work" type="range" min="1" max="90" value="25" class="w-full">
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-end text-[var(--text-primary)]">
+                                    <div>
+                                        <p class="text-sm font-bold">Waktu Istirahat</p>
+                                        <p class="text-[10px] text-[var(--text-secondary)]">Jeda cooldown antar sesi.</p>
+                                    </div>
+                                    <span id="set-label-break" class="text-lg font-mono font-bold text-emerald-500">5m</span>
+                                </div>
+                                <input id="set-input-break" type="range" min="1" max="30" value="5" class="w-full">
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <button onclick="clearAllData()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        Reset Semua Progres
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- SIDEBAR KANAN -->
+        <aside id="sidebar-right" class="w-80 bg-[var(--sidebar-bg)] border-l border-[var(--border)] flex flex-col shrink-0 sidebar-transition z-30">
+            <div class="p-6 border-b border-[var(--border)] flex justify-between items-center">
+                <h3 class="font-bold text-xs tracking-widest text-[var(--text-secondary)] uppercase flex items-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-brand transition-colors"></i>
+                    Log Tugas
+                </h3>
+                <span id="todo-count" class="px-2 py-0.5 bg-brand-soft text-brand text-[10px] font-bold rounded border border-brand-soft transition-colors">0</span>
+            </div>
+
+            <div class="p-6 border-b border-[var(--border)]">
+                <div class="relative group">
+                    <input id="todo-input" type="text" placeholder="Tambah tugas baru..." 
+                           class="w-full bg-[var(--bg-app)] border border-[var(--border)] rounded-xl py-3 px-4 text-xs text-[var(--text-primary)] outline-none focus:border-brand-soft transition-all pr-12">
+                    <button onclick="window.addTask()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-brand text-white rounded-lg flex items-center justify-center hover:opacity-90 transition-all active:scale-90 shadow-lg">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="todo-list" class="flex-1 overflow-y-auto px-6 space-y-3 pb-10 pt-4"></div>
+        </aside>
+    </div>
+
+    <script>
+        // Init Lucide
+        lucide.createIcons();
+
+        // --- DATA MAPS ---
+        const colorMap = {
+            indigo: { main: '#6366f1', rgb: '99, 102, 241' },
+            violet: { main: '#8b5cf6', rgb: '139, 92, 246' },
+            blue: { main: '#3b82f6', rgb: '59, 130, 246' },
+            amber: { main: '#f59e0b', rgb: '245, 158, 11' }
+        };
+
+        // --- CORE FUNCTIONS (Didefinisikan paling atas biar bisa dipanggil init) ---
+        window.setAccent = function(color) {
+            const config = colorMap[color] || colorMap.indigo;
+            document.documentElement.style.setProperty('--accent', config.main);
+            document.documentElement.style.setProperty('--accent-rgb', config.rgb);
+            localStorage.setItem('azero_accent', color);
+            
+            // UI feedback di settings
+            Object.keys(colorMap).forEach(key => {
+                const el = document.getElementById(`dot-${key}`);
+                if (el) el.classList.toggle('color-dot-active', key === color);
+            });
+            lucide.createIcons();
+        };
+
+        window.toggleTheme = function() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('azero_theme', isDark ? 'dark' : 'light');
+            updateThemeUI(isDark);
+        };
+
+        function updateThemeUI(isDark) {
+            const icon = document.getElementById('theme-icon'), text = document.getElementById('theme-text');
+            if (icon) icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            if (text) text.innerText = isDark ? 'Light Mode' : 'Dark Mode';
+            lucide.createIcons();
+        }
+
+        // --- IMMEDIATE EXECUTION (BIAR GAK BALIK KE DEFAULT PAS REFRESH) ---
+        (function() {
+            const savedT = localStorage.getItem('azero_theme') || 'dark';
+            if (savedT === 'light') document.body.classList.remove('dark-mode');
+            else document.body.classList.add('dark-mode');
+            
+            const savedA = localStorage.getItem('azero_accent') || 'indigo';
+            const config = colorMap[savedA] || colorMap.indigo;
+            document.documentElement.style.setProperty('--accent', config.main);
+            document.documentElement.style.setProperty('--accent-rgb', config.rgb);
+        })();
+
+        // --- STATE & VARS ---
+        const state = {
+            view: 'timer',
+            workMinutes: parseInt(localStorage.getItem('azero_work_min')) || 25,
+            breakMinutes: parseInt(localStorage.getItem('azero_break_min')) || 5,
+            timeLeft: (parseInt(localStorage.getItem('azero_work_min')) || 25) * 60,
+            isActive: false, 
+            isBreak: false,
+            cycles: parseInt(localStorage.getItem('azero_cycles')) || 0,
+            totalMinutes: parseInt(localStorage.getItem('azero_minutes')) || 0,
+            todos: JSON.parse(localStorage.getItem('azero_todos')) || []
+        };
+
+        const swState = { isActive: false, time: 0, laps: [] };
+        let timerInterval = null, swInterval = null;
+
+        // --- NAVIGATION ---
+        window.setView = function(v) {
+            state.view = v;
+            const views = { timer: 'view-timer', stopwatch: 'view-stopwatch', settings: 'view-settings' };
+            Object.keys(views).forEach(key => {
+                const el = document.getElementById(views[key]);
+                if(el) el.classList.toggle('hidden', key !== v);
+                const navBtn = document.getElementById(`nav-${key}`);
+                if (navBtn) navBtn.classList.toggle('nav-btn-active', key === v);
+            });
+            lucide.createIcons();
+        };
+
+        // --- POMODORO ---
+        function updateTimerUI() {
+            const display = document.getElementById('timer-display');
+            const m = Math.floor(state.timeLeft / 60), s = state.timeLeft % 60;
+            if (display) display.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            
+            const total = state.isBreak ? state.breakMinutes * 60 : state.workMinutes * 60;
+            const progress = ((total - state.timeLeft) / total);
+            const ring = document.getElementById('progress-circle');
+            if (ring) ring.style.strokeDashoffset = 289 - (289 * progress);
+
+            const badge = document.getElementById('status-badge'), stext = document.getElementById('session-status');
+            if (state.isBreak) {
+                if (badge) {
+                    badge.innerText = 'Rest & Zen';
+                    badge.className = 'mb-3 px-3 py-1 rounded-full border text-[8px] font-black uppercase tracking-[0.4em] bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+                }
+                if (stext) stext.innerText = 'Istirahat';
+            } else {
+                if (badge) {
+                    badge.innerText = 'Deep Focus';
+                    badge.className = 'mb-3 px-3 py-1 rounded-full border text-[8px] font-black uppercase tracking-[0.4em] bg-brand-soft border-brand-soft text-brand transition-all';
+                }
+                if (stext) stext.innerText = state.isActive ? 'Fokus' : 'Standby';
+            }
+        }
+
+        document.getElementById('btn-play').onclick = () => {
+            state.isActive = !state.isActive;
+            const icon = document.getElementById('play-icon');
+            if (state.isActive) {
+                if (icon) icon.setAttribute('data-lucide', 'pause');
+                timerInterval = setInterval(() => {
+                    if (state.timeLeft > 0) { state.timeLeft--; updateTimerUI(); }
+                    else { switchMode(); }
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                if (icon) icon.setAttribute('data-lucide', 'play');
+            }
+            lucide.createIcons();
+        };
+
+        function switchMode() {
+            state.isBreak = !state.isBreak;
+            state.timeLeft = (state.isBreak ? state.breakMinutes : state.workMinutes) * 60;
+            if (!state.isBreak) {
+                state.cycles++; state.totalMinutes += state.workMinutes;
+                localStorage.setItem('azero_cycles', state.cycles);
+                localStorage.setItem('azero_minutes', state.totalMinutes);
+                syncStats();
+            }
+            updateTimerUI();
+        }
+
+        function syncStats() {
+            ['stats-cycles', 'stats-minutes', 'side-stats-cycles'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = id.includes('minutes') ? state.totalMinutes : state.cycles;
+            });
+        }
+
+        document.getElementById('btn-reset').onclick = () => {
+            clearInterval(timerInterval); state.isActive = false;
+            state.timeLeft = (state.isBreak ? state.breakMinutes : state.workMinutes) * 60;
+            const icon = document.getElementById('play-icon');
+            if (icon) icon.setAttribute('data-lucide', 'play');
+            updateTimerUI(); lucide.createIcons();
+        };
+
+        // --- STOPWATCH ---
+        function updateSwDisplay() {
+            const min = Math.floor(swState.time / 60000), sec = Math.floor((swState.time % 60000) / 1000);
+            const secEl = document.getElementById('sw-sec-big'), minEl = document.getElementById('sw-min-big');
+            if (secEl) secEl.innerText = sec.toString().padStart(2, '0');
+            if (minEl) minEl.innerText = min;
+        }
+
+        window.toggleStopwatch = function() {
+            swState.isActive = !swState.isActive;
+            const icon = document.getElementById('sw-play-icon');
+            if (swState.isActive) {
+                if (icon) icon.setAttribute('data-lucide', 'pause');
+                const start = Date.now() - swState.time;
+                swInterval = setInterval(() => { swState.time = Date.now() - start; updateSwDisplay(); }, 100);
+            } else {
+                clearInterval(swInterval);
+                if (icon) icon.setAttribute('data-lucide', 'play');
+            }
+            lucide.createIcons();
+        };
+
+        window.resetStopwatch = function() {
+            clearInterval(swInterval); swState.isActive = false; swState.time = 0; swState.laps = [];
+            updateSwDisplay();
+            const lapsEl = document.getElementById('sw-laps'), stampEl = document.getElementById('sw-last-lap');
+            if (lapsEl) lapsEl.innerHTML = "";
+            if (stampEl) stampEl.innerHTML = "<span class='truncate italic opacity-60'>Click flag...</span><i data-lucide='flag' class='w-3.5 h-3.5 opacity-50 shrink-0'></i>";
+            const icon = document.getElementById('sw-play-icon');
+            if (icon) icon.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        };
+
+        window.lapStopwatch = function() {
+            if (swState.time === 0) return;
+            const min = document.getElementById('sw-min-big').innerText;
+            const sec = document.getElementById('sw-sec-big').innerText;
+            const t = `${min}m ${sec}s`;
+            swState.laps.unshift(t);
+            const stampEl = document.getElementById('sw-last-lap');
+            if (stampEl) stampEl.innerHTML = `<span>${t}</span><i data-lucide='flag' class='w-3.5 h-3.5 opacity-50'></i>`;
+            const lapsEl = document.getElementById('sw-laps');
+            if (lapsEl) {
+                lapsEl.innerHTML = swState.laps.map((l, i) => `
+                    <div class="flex justify-between items-center p-3 bg-brand-soft rounded-xl border border-brand-soft text-[11px]">
+                        <span class="text-[var(--text-secondary)] font-bold uppercase tracking-widest">Lap ${swState.laps.length - i}</span>
+                        <span class="font-mono text-brand font-bold">${l}</span>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        };
+
+        // --- TASK MANAGEMENT ---
+        window.addTask = function() {
+            const input = document.getElementById('todo-input');
+            const val = input ? input.value.trim() : "";
+            if (val) { state.todos.unshift({ text: val, completed: false }); if (input) input.value = ''; renderTodos(); }
+        };
+
+        function renderTodos() {
+            localStorage.setItem('azero_todos', JSON.stringify(state.todos));
+            const countEl = document.getElementById('todo-count'), listEl = document.getElementById('todo-list');
+            if (countEl) countEl.innerText = state.todos.length;
+            if (listEl) {
+                listEl.innerHTML = state.todos.map((t, i) => `
+                    <div class="p-4 rounded-xl border flex items-center gap-3 transition-all ${t.completed ? 'opacity-40 border-transparent' : 'bg-slate-500/5 border-[var(--border)]'}">
+                        <button onclick="toggleTodo(${i})" class="w-5 h-5 rounded border border-[var(--border)] flex items-center justify-center ${t.completed ? 'bg-brand border-brand' : ''}">
+                            ${t.completed ? '<i data-lucide="check" class="w-3 h-3 text-white"></i>' : ''}
+                        </button>
+                        <span class="flex-1 text-xs font-medium ${t.completed ? 'line-through text-[var(--text-secondary)]' : ''}">${t.text}</span>
+                        <button onclick="deleteTodo(${i})" class="text-[var(--text-secondary)] hover:text-rose-500 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        window.toggleTodo = (i) => { state.todos[i].completed = !state.todos[i].completed; renderTodos(); };
+        window.deleteTodo = (i) => { state.todos.splice(i, 1); renderTodos(); };
+
+        // --- INIT ---
+        function init() {
+            // Update UI Theme
+            updateThemeUI(document.body.classList.contains('dark-mode'));
+            setAccent(localStorage.getItem('azero_accent') || 'indigo');
+
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const splash = document.getElementById('splash-screen');
+                    if (splash) { splash.style.opacity = '0'; splash.style.visibility = 'hidden'; }
+                }, 1800);
+            });
+
+            // Input handlers
+            const siWork = document.getElementById('set-input-work'), siBreak = document.getElementById('set-input-break');
+            const slWork = document.getElementById('set-label-work'), slBreak = document.getElementById('set-label-break');
+            if (siWork) {
+                siWork.value = state.workMinutes;
+                siWork.oninput = (e) => {
+                    const v = parseInt(e.target.value); state.workMinutes = v;
+                    if (slWork) slWork.innerText = v + 'm';
+                    localStorage.setItem('azero_work_min', v);
+                    if(!state.isActive && !state.isBreak) { state.timeLeft = v * 60; updateTimerUI(); }
+                };
+            }
+            if (siBreak) {
+                siBreak.value = state.breakMinutes;
+                siBreak.oninput = (e) => {
+                    const v = parseInt(e.target.value); state.breakMinutes = v;
+                    if (slBreak) slBreak.innerText = v + 'm';
+                    localStorage.setItem('azero_break_min', v);
+                    if(!state.isActive && state.isBreak) { state.timeLeft = v * 60; updateTimerUI(); }
+                };
+            }
+
+            window.toggleSidebar = (s) => { document.getElementById(`sidebar-${s}`).classList.toggle('sidebar-hidden'); };
+            const todoIn = document.getElementById('todo-input');
+            if (todoIn) todoIn.onkeypress = (e) => { if (e.key === 'Enter') window.addTask(); };
+            
+            setInterval(() => { 
+                const clockEl = document.getElementById('current-clock');
+                if (clockEl) clockEl.innerText = new Date().toLocaleTimeString('en-GB'); 
+            }, 1000);
+
+            syncStats(); renderTodos(); updateTimerUI();
+        }
+
+        window.clearAllData = function() {
+            if(confirm('Hapus semua progres?')) { localStorage.clear(); window.location.reload(); }
+        };
+
+        init();
+    </script>
+</body>
+</html>
